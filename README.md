@@ -21,6 +21,17 @@ A **secure, zero-knowledge file locker** for Android built using **Flutter**, de
 - Hardened back navigation
 - Vault never exposed without unlock
 
+### ✅ Phase 3 – Biometric Authentication + Android Keystore
+- Biometric unlock (Fingerprint / Face where supported)
+- Hardware-backed AES key in Android Keystore (non-exportable)
+- Key usage requires user authentication
+
+### ✅ Phase 4 – Encrypted Vault & File Handling
+- Import files into a private vault directory
+- Files encrypted at rest using AES-256-GCM (Android Keystore key)
+- Vault listing uses a plaintext metadata-only index (`filesDir/vault/index.json`) (no crypto required)
+- Decrypted file viewing uses a short-lived temp file in `cacheDir/` shared via `FileProvider` (never external storage)
+
 ---
 
 ## 🔐 Security Model (High-Level)
@@ -37,22 +48,16 @@ No sensitive data is ever stored in plaintext.
 ## 🧱 Tech Stack
 
 - **Flutter (Dart)**
-- **Android (Kotlin for native security layers – upcoming)**
+- **Android (Kotlin for native security + crypto layers)**
 - Material 3 (Dark theme)
 
 ---
 
 ## 🗺 Roadmap
 
-### 🔑 Phase 3 – Authentication
-- Biometric unlock (Fingerprint / Face)
-- Android Keystore integration
-- Hardware-backed AES key
+### 🔑 Phase 3 – Authentication (Completed)
 
-### 🗂 Phase 4 – Encrypted Vault
-- File import (scoped storage)
-- File-level AES-GCM encryption
-- Encrypted metadata
+### 🗂 Phase 4 – Encrypted Vault (Completed)
 
 ### 🧨 Phase 5 – Advanced Security
 - Panic mode (fake vault)
@@ -78,3 +83,19 @@ Android · Flutter · Cybersecurity
 ## 📄 License
 
 MIT License (to be added)
+
+---
+
+## 🧪 Manual Testing (Phase 4)
+
+- **Import file → encrypted file appears in vault**
+  - Unlock → Vault → `+` → pick any file
+- **Verify vault directory contains only encrypted artifacts**
+  - `filesDir/vault/` should contain only:
+    - `*.enc` (random UUID filenames)
+    - `index.json` (metadata only: filename, size, MIME type, timestamp)
+- **Kill app → reopen → biometric required → files still listed**
+- **Copy vault directory externally → files unreadable**
+- **Disable biometrics → import/list/open fails safely**
+- **Open a file → biometric prompt → file opens in external viewer (PDF/Image/etc.)**
+  - Verify no plaintext is written outside `cacheDir/`

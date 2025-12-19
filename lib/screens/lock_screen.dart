@@ -57,6 +57,9 @@ class LockScreen extends StatelessWidget {
                         // MANUAL TEST: Failed biometric -> Vault NOT accessible.
                         // MANUAL TEST: Disable biometrics -> app refuses unlock.
                         try {
+                          LockStateService.instance.suppressInactiveAutoLockFor(
+                            const Duration(seconds: 10),
+                          );
                           final bool canAuthenticate =
                               (await _cryptoChannel.invokeMethod<bool>('canAuthenticate')) ?? false;
                           if (!canAuthenticate) return;
@@ -66,7 +69,10 @@ class LockScreen extends StatelessWidget {
                           if (!keyReady) return;
 
                           final bool authenticated =
-                              (await _cryptoChannel.invokeMethod<bool>('authenticate')) ?? false;
+                              (await _cryptoChannel.invokeMethod<bool>('authenticate', {
+                                'force': true,
+                              })) ??
+                                  false;
                           if (!authenticated) return;
 
                           LockStateService.instance.unlock();

@@ -56,7 +56,14 @@ class _SecureVaultAppState extends State<SecureVaultApp>
 
     // MANUAL TEST: Press Home or open Recents. This triggers paused/inactive on
     // Android, and we lock immediately.
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.inactive) {
+      if (_lockState.suppressInactiveAutoLock) return;
+      _lockState.lock();
+      return;
+    }
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      if (_lockState.suppressPausedAutoLock) return;
       _lockState.lock();
       return;
     }
