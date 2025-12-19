@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'lock_screen.dart';
 import '../services/lock_state_service.dart';
 
 class VaultScreen extends StatelessWidget {
@@ -15,11 +16,27 @@ class VaultScreen extends StatelessWidget {
         // MANUAL TEST: Press Back from Vault.
         // Expected: app locks and Vault is not reachable via back navigation.
         LockStateService.instance.lock();
-        Navigator.of(context).pushNamedAndRemoveUntil('/lock', (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LockScreen()),
+          (_) => false,
+        );
         return false;
       },
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              LockStateService.instance.lock();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LockScreen()),
+                (_) => false,
+              );
+            },
+          ),
           title: const Text('Vault'),
         ),
         body: Center(
