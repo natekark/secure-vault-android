@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/lock_state_service.dart';
 
 class LockScreen extends StatelessWidget {
   const LockScreen({super.key});
+
+  static const MethodChannel _cryptoChannel = MethodChannel('secure_vault/crypto');
 
   @override
   Widget build(BuildContext context) {
@@ -48,10 +51,29 @@ class LockScreen extends StatelessWidget {
                   SizedBox(
                     height: 52,
                     child: FilledButton(
-                      onPressed: () {
-                        // MANUAL TEST: Unlock -> Vault.
-                        LockStateService.instance.unlock();
-                        Navigator.of(context).pushReplacementNamed('/vault');
+                      onPressed: () async {
+                        // MANUAL TEST: First app launch -> biometric prompt shown.
+                        // MANUAL TEST: Successful auth -> Vault opens.
+                        // MANUAL TEST: Failed biometric -> Vault NOT accessible.
+                        // MANUAL TEST: Disable biometrics -> app refuses unlock.
+                        try {
+                          final bool canAuthenticate =
+                              (await _cryptoChannel.invokeMethod<bool>('canAuthenticate')) ?? false;
+                          if (!canAuthenticate) return;
+
+                          final bool keyReady =
+                              (await _cryptoChannel.invokeMethod<bool>('generateKeyIfNeeded')) ?? false;
+                          if (!keyReady) return;
+
+                          final bool authenticated =
+                              (await _cryptoChannel.invokeMethod<bool>('authenticate')) ?? false;
+                          if (!authenticated) return;
+
+                          LockStateService.instance.unlock();
+                          Navigator.of(context).pushReplacementNamed('/vault');
+                        } on PlatformException {
+                          return;
+                        }
                       },
                       child: const Text('Unlock'),
                     ),
